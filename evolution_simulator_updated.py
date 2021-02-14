@@ -155,6 +155,7 @@ class SimulationVisualization:
         self.bar.pack(side="left")
 
         self.frame.pack()
+        self.reset()
         self.window.mainloop()
 
     def reset(self):
@@ -169,7 +170,6 @@ class SimulationVisualization:
         while self.play:
             self.print_grid()
             self.cycle(int(self.spin.get()))
-            self.bar["value"] = self.grid.get_average_reproduction() * 100
 
     def switch_holes(self):
         self.grid.holes = not self.grid.holes
@@ -184,6 +184,7 @@ class SimulationVisualization:
         reproductions = self.grid.attributes[REPRODUCTION, alive_mask]
         increments = np.minimum(5, ((healths / 10) ** 0.5) // 2)[:, None]
 
+        # draw the grid
         width = 10
         side_range = np.arange(self.side)
         centers = 50 + width * np.stack(np.meshgrid(side_range, side_range), axis=2)[alive_mask]
@@ -197,7 +198,7 @@ class SimulationVisualization:
 
         # print the graph
         attributes = np.stack([reproductions, attacks], axis=1)
-        rectangle_coords = np.array([580, 250]) + np.array([2, -2]) * (attributes * 100).astype(np.int)
+        rectangle_coords = np.array([580 + 1, 250 - 1]) + np.array([2, -2]) * (attributes * 100).astype(np.int)
         for x, y in rectangle_coords:
             self.canvas.create_rectangle(x, y, x, y)
 
@@ -205,6 +206,9 @@ class SimulationVisualization:
         self.canvas.create_rectangle(580, 250, 780, 250)
         self.canvas.create_text(630, 270, text="Reproduction factor --->")
         self.canvas.create_text(540, 200, text="Vampirism^")
+
+        # update the reproduction rate bar
+        self.bar["value"] = self.grid.get_average_reproduction() * 100
 
         self.window.update_idletasks()
         self.window.update()
