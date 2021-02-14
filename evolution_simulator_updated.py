@@ -44,7 +44,7 @@ def make_tree(parent_genomes):
 class Grid:
     def __init__(self, side_length):
         assert side_length >= 1
-        # this creates four arrays which each represent one of the four characteristics of the trees
+        # this creates an array representing the four characteristics of the trees
         # the ij space in each matrix represents the ijth tree
         # matrices are more efficient as a datatype
 
@@ -58,16 +58,14 @@ class Grid:
         self.holes = False
 
     def reset(self):
-        # put the first tree down
+        # clear the grid and put the first tree down
         self.attributes[:] = 0
         self.attributes[[ATTACK, REPRODUCTION, BASE_HEALTH, HEALTH], 0, 0] = [0.0, 0.5, 0.5, 1000]
 
     def get_average_reproduction(self):
-        # generate the number of empty spaces in empty.spaces
-        empty_spaces = np.sum(self.attributes[BASE_HEALTH] == 0)
-
-        # the 1 is added to not divide by 0
-        return np.sum(self.attributes[REPRODUCTION]) / (self.side * self.side - empty_spaces + 1)
+        alive_mask = self.attributes[BASE_HEALTH] > 0
+        alive_count = np.prod(alive_mask.shape)
+        return np.mean(self.attributes[REPRODUCTION, alive_mask]) if alive_count else 0
 
     def cycle(self, number_of_cycles):
         # for each cycle
