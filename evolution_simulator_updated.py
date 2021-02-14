@@ -42,7 +42,7 @@ def make_tree(parent_genomes):
 
 
 class Grid:
-    def __init__(self, side_length, holes=False):
+    def __init__(self, side_length):
         assert side_length >= 1
         # this creates four arrays which each represent one of the four characteristics of the trees
         # the ij space in each matrix represents the ijth tree
@@ -55,10 +55,11 @@ class Grid:
         # this stores the side length of the square for later use
         self.side = side_length
         # this stores whether or not the top half of the grid contains holes
-        self.holes = holes
+        self.holes = False
 
-    def start_simulation(self):
+    def reset(self):
         # put the first tree down
+        self.attributes[:] = 0
         self.attributes[[ATTACK, REPRODUCTION, BASE_HEALTH, HEALTH], 0, 0] = [0.0, 0.5, 0.5, 1000]
 
     def get_average_reproduction(self):
@@ -131,19 +132,24 @@ class SimulationVisualization:
         self.canvas.pack()
         self.side = side
         self.grid = Grid(self.side)
-        self.play = True
         self.frame = tk.Frame(self.window)
 
-        btn1 = tk.Button(self.frame, text="start_loop", bg="orange", fg="red", command=self.begin_simulation)
+        btn1 = tk.Button(self.frame, text="reset", bg="orange", fg="red", command=self.reset)
+        btn1.config(width=12)
         btn1.pack(side="left")
-        btn2 = tk.Button(self.frame, text="pause", bg="orange", fg="red", command=self.pause)
-        btn2.pack(side="left")
-        btn2 = tk.Button(self.frame, text="play", bg="orange", fg="red", command=self.play)
-        btn2.pack(side="left")
-        btn3 = tk.Button(self.frame, text="add holes", bg="orange", fg="red", command=self.add_holes)
-        btn3.pack(side="left")
-        btn4 = tk.Button(self.frame, text="remove holes", bg="orange", fg="red", command=self.remove_holes)
-        btn4.pack(side="left")
+
+        self.play = True
+        self.play_switch = tk.Button(self.frame, text="", bg="orange", fg="red", command=self.switch_play)
+        self.play_switch.config(width=12)
+        self.play_switch.pack(side="left")
+        self.switch_play()
+
+        self.grid.holes = True
+        self.holes_switch = tk.Button(self.frame, text="", bg="orange", fg="red", command=self.switch_holes)
+        self.holes_switch.config(width=12)
+        self.holes_switch.pack(side="left")
+        self.switch_holes()
+
         self.spin = tk.Spinbox(self.frame, from_=1, to=100, width=5)
         self.spin.pack(side="left")
 
@@ -153,28 +159,23 @@ class SimulationVisualization:
         self.frame.pack()
         self.window.mainloop()
 
-    def add_holes(self):
-        self.grid.holes = True
-
-    def remove_holes(self):
-        self.grid.holes = False
-
-    def pause(self):
-        self.play = False
-
-    def play(self):
+    def reset(self):
+        self.grid.reset()
         self.play = True
+        self.switch_play()
+        self.print_grid()
+
+    def switch_play(self):
+        self.play = not self.play
+        self.play_switch["text"] = "pause" if self.play else "resume"
         while self.play:
             self.print_grid()
             self.cycle(int(self.spin.get()))
             self.bar["value"] = self.grid.get_average_reproduction() * 100
 
-    def begin_simulation(self):
-        self.grid.start_simulation()
-        while self.play:
-            self.print_grid()
-            self.cycle(int(self.spin.get()))
-            self.bar["value"] = self.grid.get_average_reproduction() * 100
+    def switch_holes(self):
+        self.grid.holes = not self.grid.holes
+        self.holes_switch["text"] = "remove holes" if self.grid.holes else "add holes"
 
     def print_grid(self):
         self.canvas.delete("all")
